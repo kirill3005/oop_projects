@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QGraphicsView, QGraphicsScene
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QUndoStack
+from PySide6.QtGui import QUndoStack, QPainter
 from src.constants import *
 from src.logic.tools import SelectionTool, CreationTool
 from src.logic.shapes import Group
@@ -13,7 +13,7 @@ class EditorCanvas(QGraphicsView):
         self.setScene(self.scene)
         self.scene.setSceneRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT)
 
-        self.setRenderHint(self.renderHints() | Qt.RenderHint.Antialiasing)
+        self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setMouseTracking(True)
 
         self.undo_stack = QUndoStack(self)

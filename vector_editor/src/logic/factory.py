@@ -1,4 +1,4 @@
-from src.logic.shapes import Rectangle, Ellipse, Line, Group
+from src.logic.shapes import Rectangle, Ellipse, Line, Group, Shape
 from src.constants import *
 
 class ShapeFactory:
@@ -29,10 +29,11 @@ class ShapeFactory:
 
             for child_data in data.get("children", []):
                 child = ShapeFactory.from_dict(child_data)
-                group.addToGroup(child)
-                if "pos" in child_data:
-                    c_pos = child_data["pos"]
-                    child.setPos(c_pos[0], c_pos[1])
+                if child:
+                    group.addToGroup(child)
+                    if "pos" in child_data:
+                        c_pos = child_data["pos"]
+                        child.setPos(c_pos[0], c_pos[1])
             return group
 
         props = data.get("props", {})

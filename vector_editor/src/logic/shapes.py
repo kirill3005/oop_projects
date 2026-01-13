@@ -1,18 +1,16 @@
-from abc import ABC, abstractmethod
-from PySide6.QtWidgets import QGraphicsPathItem, QGraphicsItemGroup
+from PySide6.QtWidgets import QGraphicsPathItem, QGraphicsItemGroup, QGraphicsItem
 from PySide6.QtGui import QPen, QColor, QPainterPath
 from src.constants import *
 
-class Shape(QGraphicsPathItem, ABC):
+class Shape:
     def __init__(self, color=DEFAULT_COLOR, stroke_width=DEFAULT_STROKE_WIDTH):
-        super().__init__()
-        self.setFlag(QGraphicsPathItem.GraphicsItemFlag.ItemIsSelectable)
-        self.setFlag(QGraphicsPathItem.GraphicsItemFlag.ItemIsMovable)
-        self.setFlag(QGraphicsPathItem.GraphicsItemFlag.ItemSendsGeometryChanges)
-
         self.current_color = color
         self.current_width = stroke_width
-        self._update_pen()
+
+    def init_qt_flags(self):
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges)
 
     def _update_pen(self):
         pen = QPen(QColor(self.current_color))
@@ -28,22 +26,22 @@ class Shape(QGraphicsPathItem, ABC):
         self._update_pen()
 
     @property
-    @abstractmethod
     def type_name(self) -> str:
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
     def set_geometry(self, start, end):
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
     def to_dict(self) -> dict:
-        pass
+        raise NotImplementedError
 
-class Rectangle(Shape):
+class Rectangle(QGraphicsPathItem, Shape):
     def __init__(self, x, y, w, h, color=DEFAULT_COLOR, stroke_width=DEFAULT_STROKE_WIDTH):
-        super().__init__(color, stroke_width)
+        QGraphicsPathItem.__init__(self)
+        Shape.__init__(self, color, stroke_width)
+        self.init_qt_flags()
         self.rect_data = (x, y, w, h)
+        self._update_pen()
         self._redraw()
 
     def _redraw(self):
@@ -85,10 +83,13 @@ class Ellipse(Rectangle):
         path.addEllipse(*self.rect_data)
         self.setPath(path)
 
-class Line(Shape):
+class Line(QGraphicsPathItem, Shape):
     def __init__(self, x1, y1, x2, y2, color=DEFAULT_COLOR, stroke_width=DEFAULT_STROKE_WIDTH):
-        super().__init__(color, stroke_width)
+        QGraphicsPathItem.__init__(self)
+        Shape.__init__(self, color, stroke_width)
+        self.init_qt_flags()
         self.line_data = (x1, y1, x2, y2)
+        self._update_pen()
         self._redraw()
 
     @property
@@ -120,20 +121,26 @@ class Line(Shape):
 class Group(QGraphicsItemGroup, Shape):
     def __init__(self):
         QGraphicsItemGroup.__init__(self)
-        self.setFlag(QGraphicsItemGroup.GraphicsItemFlag.ItemIsSelectable)
-        self.setFlag(QGraphicsItemGroup.GraphicsItemFlag.ItemIsMovable)
+        Shape.__init__(self)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable)
         self.setHandlesChildEvents(True)
 
     @property
     def type_name(self) -> str:
         return "group"
 
+    def _update_pen(self):
+        pass 
+
     def set_active_color(self, color: str):
+        self.current_color = color
         for child in self.childItems():
             if isinstance(child, Shape):
                 child.set_active_color(color)
 
     def set_stroke_width(self, width: int):
+        self.current_width = width
         for child in self.childItems():
             if isinstance(child, Shape):
                 child.set_stroke_width(width)
